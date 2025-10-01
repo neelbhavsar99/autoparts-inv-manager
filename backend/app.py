@@ -1,0 +1,77 @@
+"""
+Flask application entry point
+Optimized for low-resource environments (old MacBook Pro)
+"""
+import os
+from flask import Flask, jsonify
+from flask_login import LoginManager
+from flask_cors import CORS
+from models import init_db, get_db, User
+
+# Initialize Flask app
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
+
+# Enable CORS for frontend
+allowed_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:5173').split(',')
+CORS(app, supports_credentials=True, origins=allowed_origins)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user by ID for Flask-Login"""
+    db = get_db()
+    try:
+        return db.query(User).get(int(user_id))
+    finally:
+        db.close()
+
+# Register blueprints
+from auth import auth_bp
+from api.business import business_bp
+from api.customers import customers_bp
+from api.invoices import invoices_bp
+from api.dashboard import dashboard_bp
+
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(business_bp, url_prefix='/api/business')
+app.register_blueprint(customers_bp, url_prefix='/api/customers')
+app.register_blueprint(invoices_bp, url_prefix='/api/invoices')
+app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+
+# Health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'ok', 'message': 'AutoParts Invoice Manager API'}), 200
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
+
+if __name__ == '__main__':
+    # Initialize database on first run
+    init_db()
+    print("✅ Database initialized")
+    print("🚀 Starting Flask server on http://localhost:5000")
+    print("⚡ Optimized for low-resource environments")
+    
+    # Run development server
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True,
+        threaded=True,  # Handle multiple requests efficiently
+        use_reloader=True  # Auto-reload on code changes
+    )
