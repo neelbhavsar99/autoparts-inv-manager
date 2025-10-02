@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (including express)
 RUN npm install
 
 # Copy source code
@@ -16,8 +16,8 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Install express for serving
-RUN npm install express
+# Verify dist folder exists and list contents
+RUN ls -la && ls -la dist/
 
 # Expose port
 EXPOSE 3000
