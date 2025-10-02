@@ -65,6 +65,55 @@ app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
 def health_check():
     return jsonify({'status': 'ok', 'message': 'AutoParts Invoice Manager API'}), 200
 
+# Database status endpoint
+@app.route('/api/db-status', methods=['GET'])
+def db_status():
+    """Check database status and user count"""
+    try:
+        # First ensure tables exist
+        init_db()
+        
+        db = get_db()
+        try:
+            user_count = db.query(User).count()
+            admin_exists = db.query(User).filter_by(email='admin@autoparts.com').first() is not None
+            return jsonify({
+                'user_count': user_count,
+                'admin_exists': admin_exists,
+                'flask_env': os.environ.get('FLASK_ENV', 'development'),
+                'tables_created': True
+            }), 200
+        finally:
+            db.close()
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'tables_created': False
+        }), 500
+
+# Manual seed endpoint (for debugging)
+@app.route('/api/seed-db', methods=['POST'])
+def manual_seed():
+    """Manually seed the database"""
+    try:
+        # Ensure tables exist first
+        init_db()
+        from seed import seed_database
+        seed_database()
+        return jsonify({'message': 'Database seeded successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Initialize tables endpoint
+@app.route('/api/init-db', methods=['POST'])
+def initialize_database():
+    """Initialize database tables"""
+    try:
+        init_db()
+        return jsonify({'message': 'Database tables created successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):

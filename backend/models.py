@@ -130,7 +130,13 @@ class InvoiceLineItem(Base):
 import os
 
 # Use PostgreSQL in production, SQLite in development
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
+# For Railway, use /tmp for SQLite to ensure write permissions
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    # Railway deployment - use /tmp for SQLite or PostgreSQL if provided
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/database.db')
+else:
+    # Local development
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
 
 # Fix for Render's postgres:// URL (SQLAlchemy needs postgresql://)
 if DATABASE_URL.startswith('postgres://'):
