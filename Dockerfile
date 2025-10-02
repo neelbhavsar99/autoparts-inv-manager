@@ -25,4 +25,5 @@ EXPOSE 5000
 ENV PYTHONUNBUFFERED=1
 
 # Start command (we're already in /app/backend from WORKDIR)
-CMD ["gunicorn", "-c", "gunicorn_config.py", "app:app"]
+# Use shell form so $PORT expands
+CMD gunicorn -c gunicorn_config.py --log-level debug app:app
