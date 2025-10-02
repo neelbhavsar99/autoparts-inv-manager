@@ -77,6 +77,18 @@ def internal_error(error):
 if __name__ == '__main__':
     # Initialize database on first run
     init_db()
+    
+    # Auto-seed in production if database is empty
+    if os.environ.get('FLASK_ENV') == 'production':
+        db = get_db()
+        try:
+            if db.query(User).count() == 0:
+                print("🌱 Empty database detected, running seed...")
+                from seed import seed_database
+                seed_database()
+        finally:
+            db.close()
+    
     print("✅ Database initialized")
     print("🚀 Starting Flask server on http://localhost:5000")
     print("⚡ Optimized for low-resource environments")
