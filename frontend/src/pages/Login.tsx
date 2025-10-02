@@ -103,15 +103,6 @@ export default function Login({ onLogin }: LoginProps) {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          {/* Demo credentials hint */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 text-center">
-              <strong>Demo Credentials:</strong><br />
-              Email: admin@autoparts.com<br />
-              Password: admin123
-            </p>
-          </div>
         </div>
 
         {/* Footer */}
