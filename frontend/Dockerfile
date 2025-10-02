@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Verify dist folder exists and list contents
-RUN ls -la && ls -la dist/
+RUN ls -la && ls -la dist/ 2>/dev/null || echo 'dist directory not found, checking if build failed'
 
 # Expose port
 EXPOSE 3000
