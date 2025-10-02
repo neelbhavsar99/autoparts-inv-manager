@@ -10,14 +10,28 @@ from models import init_db, get_db, User
 
 # Initialize Flask app
 app = Flask(__name__)
+# Security configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'  # HTTPS only in production
+app.config['SESSION_COOKIE_SAMESITE'] = 'None' if os.environ.get('FLASK_ENV') == 'production' else 'Lax'  # Cross-site for production
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
+
+# Production environment check
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['DEBUG'] = False
+    # Ensure SECRET_KEY is set in production
+    if app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production':
+        raise ValueError('SECRET_KEY environment variable must be set in production!')
 
 # Enable CORS for frontend
 allowed_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:5173').split(',')
-CORS(app, supports_credentials=True, origins=allowed_origins)
+CORS(app, 
+     supports_credentials=True, 
+     origins=allowed_origins,
+     allow_headers=['Content-Type', 'Authorization'],
+     expose_headers=['Content-Type'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # Initialize Flask-Login
 login_manager = LoginManager()
