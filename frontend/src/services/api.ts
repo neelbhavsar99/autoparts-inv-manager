@@ -3,7 +3,8 @@
  * Handles all HTTP requests to Flask backend
  */
 
-const API_BASE = '/api';
+// Use environment variable or fallback to relative path
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 interface FetchOptions extends RequestInit {
   body?: any;
