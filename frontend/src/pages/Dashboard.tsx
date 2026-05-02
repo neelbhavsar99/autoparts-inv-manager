@@ -290,8 +290,7 @@ export default function Dashboard() {
                     },
                     y: {
                       grid: { 
-                        color: '#f1f5f9',
-                        drawBorder: false 
+                        color: '#f1f5f9'
                       },
                       ticks: { 
                         color: '#94a3b8', 
@@ -395,7 +394,7 @@ export default function Dashboard() {
                 datasets: [
                   {
                     label: 'New Customers',
-                    data: stats.monthly_sales.map((item, index) => Math.ceil((index + 3) * 2.5)), // Mock data
+                    data: stats.monthly_sales.map((_, index) => Math.ceil((index + 3) * 2.5)), // Mock data
                     backgroundColor: 'rgba(196, 181, 253, 0.8)',
                     borderColor: 'rgba(196, 181, 253, 1)',
                     borderRadius: 6,
@@ -425,8 +424,7 @@ export default function Dashboard() {
                   },
                   y: {
                     grid: { 
-                      color: '#f1f5f9',
-                      drawBorder: false 
+                      color: '#f1f5f9'
                     },
                     ticks: { 
                       color: '#94a3b8', 
@@ -499,8 +497,7 @@ export default function Dashboard() {
                   },
                   y: {
                     grid: { 
-                      color: '#f1f5f9',
-                      drawBorder: false 
+                      color: '#f1f5f9'
                     },
                     ticks: { 
                       color: '#94a3b8', 
