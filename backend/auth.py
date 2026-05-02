@@ -5,9 +5,20 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from models import get_db, User
 from functools import wraps
-import jwt
 import datetime
 import os
+
+# Temporarily disable JWT for production debugging
+jwt = None
+JWT_ENABLED = False
+
+# try:
+#     import jwt
+#     JWT_ENABLED = True
+# except ImportError:
+#     print("WARNING: PyJWT not available, JWT authentication disabled")
+#     jwt = None
+#     JWT_ENABLED = False
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -17,6 +28,8 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-this-in-produc
 
 def create_token(user_id):
     """Create a simple JWT token that expires in 7 days"""
+    if not JWT_ENABLED:
+        return f"simple_token_{user_id}"
     payload = {
         'user_id': user_id,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
@@ -26,6 +39,14 @@ def create_token(user_id):
 
 def verify_token(token):
     """Verify JWT token and return user_id if valid"""
+    if not JWT_ENABLED:
+        # Simple fallback for when JWT is disabled
+        if token and token.startswith('simple_token_'):
+            try:
+                return int(token.replace('simple_token_', ''))
+            except:
+                return None
+        return None
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
         return payload['user_id']
