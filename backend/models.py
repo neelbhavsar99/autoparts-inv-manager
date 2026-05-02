@@ -78,6 +78,7 @@ class BusinessInfo(Base):
     email = Column(String(120))
     tax_id = Column(String(50))
     logo_url = Column(String(500))
+    default_payment_terms = Column(String(100), default='COD CASH ONLY')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -128,6 +129,9 @@ class Invoice(Base):
     paid_amount = Column(Float, default=0.0)
     status = Column(String(20), default='pending')  # pending, paid, partial
     notes = Column(Text)
+    reference = Column(String(100))  # Customer PO or reference number
+    salesperson = Column(String(100))  # Who created/sold the invoice
+    payment_terms = Column(String(100))  # Payment terms for this invoice
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

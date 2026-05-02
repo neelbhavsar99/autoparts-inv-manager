@@ -11,7 +11,11 @@ export default function CreateInvoice() {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [invoiceTitle, setInvoiceTitle] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reference, setReference] = useState('');
+  const [salesperson, setSalesperson] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('COD CASH ONLY');
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
     { product_name: '', part_number: '', quantity: 1, unit_price: 0 },
   ]);
@@ -121,7 +125,10 @@ export default function CreateInvoice() {
         invoice_date: invoiceDate,
         line_items: validItems,
         notes: notes.trim(),
-        status: 'unpaid',
+        reference: reference.trim(),
+        salesperson: salesperson.trim(),
+        payment_terms: paymentTerms,
+        status: 'pending',
       };
 
       const response = await invoicesAPI.create(invoiceData);
@@ -156,7 +163,7 @@ export default function CreateInvoice() {
         {/* Invoice Info */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoice Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -251,6 +258,19 @@ export default function CreateInvoice() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Invoice Title/Description
+              </label>
+              <input
+                type="text"
+                value={invoiceTitle}
+                onChange={(e) => setInvoiceTitle(e.target.value)}
+                className="input-field"
+                placeholder="Car parts invoice"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Invoice Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -260,6 +280,52 @@ export default function CreateInvoice() {
                 className="input-field"
                 required
               />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reference/PO Number
+              </label>
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                className="input-field"
+                placeholder="Customer PO #12345"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Salesperson
+              </label>
+              <input
+                type="text"
+                value={salesperson}
+                onChange={(e) => setSalesperson(e.target.value)}
+                className="input-field"
+                placeholder="John Smith"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Terms
+              </label>
+              <select
+                value={paymentTerms}
+                onChange={(e) => setPaymentTerms(e.target.value)}
+                className="input-field"
+              >
+                <option value="COD CASH ONLY">COD CASH ONLY</option>
+                <option value="Net 30">Net 30</option>
+                <option value="Net 15">Net 15</option>
+                <option value="Due on Receipt">Due on Receipt</option>
+                <option value="2/10 Net 30">2/10 Net 30</option>
+                <option value="Prepaid">Prepaid</option>
+              </select>
             </div>
           </div>
         </div>

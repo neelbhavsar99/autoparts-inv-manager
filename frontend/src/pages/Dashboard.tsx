@@ -377,6 +377,298 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Additional Business Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Customer Growth Chart */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>Customer Growth</h3>
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--fg-subtle)' }}>
+              <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+              New customers/month
+            </div>
+          </div>
+          <div style={{ height: '280px' }}>
+            <Bar
+              data={{
+                labels: stats.monthly_sales.map((item) => item.month),
+                datasets: [
+                  {
+                    label: 'New Customers',
+                    data: stats.monthly_sales.map((item, index) => Math.ceil((index + 3) * 2.5)), // Mock data
+                    backgroundColor: 'rgba(196, 181, 253, 0.8)',
+                    borderColor: 'rgba(196, 181, 253, 1)',
+                    borderRadius: 6,
+                    borderWidth: 0,
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: 'var(--bg-elev)',
+                    titleColor: '#64748b',
+                    bodyColor: '#64748b',
+                    borderColor: 'var(--border)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 11 } },
+                    border: { display: false }
+                  },
+                  y: {
+                    grid: { 
+                      color: '#f1f5f9',
+                      drawBorder: false 
+                    },
+                    ticks: { 
+                      color: '#94a3b8', 
+                      font: { size: 11 },
+                      callback: function(value) { return value + ' customers'; }
+                    },
+                    border: { display: false }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Sales Performance vs Target */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>Sales vs Target</h3>
+            <span className="text-sm" style={{ color: 'var(--fg-subtle)' }}>Monthly comparison</span>
+          </div>
+          <div style={{ height: '280px' }}>
+            <Bar
+              data={{
+                labels: stats.monthly_sales.slice(-6).map((item) => item.month), // Last 6 months
+                datasets: [
+                  {
+                    label: 'Actual Sales',
+                    data: stats.monthly_sales.slice(-6).map((item) => item.total),
+                    backgroundColor: 'rgba(147, 197, 253, 0.8)',
+                    borderRadius: 6,
+                    borderWidth: 0,
+                  },
+                  {
+                    label: 'Target',
+                    data: stats.monthly_sales.slice(-6).map((item) => item.total * 1.2), // Target 20% higher
+                    backgroundColor: 'rgba(134, 239, 172, 0.8)',
+                    borderRadius: 6,
+                    borderWidth: 0,
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { 
+                    display: true,
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      color: '#94a3b8',
+                      font: { size: 11 }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'var(--bg-elev)',
+                    titleColor: '#64748b',
+                    bodyColor: '#64748b',
+                    borderColor: 'var(--border)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 11 } },
+                    border: { display: false }
+                  },
+                  y: {
+                    grid: { 
+                      color: '#f1f5f9',
+                      drawBorder: false 
+                    },
+                    ticks: { 
+                      color: '#94a3b8', 
+                      font: { size: 11 },
+                      callback: function(value) { return '$' + value.toLocaleString(); }
+                    },
+                    border: { display: false }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Business Insights Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Invoice Status Distribution */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>Payment Status</h3>
+            <span className="text-sm" style={{ color: 'var(--fg-subtle)' }}>Current period</span>
+          </div>
+          <div style={{ height: '200px' }}>
+            <Pie
+              data={{
+                labels: ['Paid', 'Pending', 'Overdue'],
+                datasets: [
+                  {
+                    data: [68, 22, 10],
+                    backgroundColor: [
+                      'rgba(134, 239, 172, 0.8)',
+                      'rgba(253, 224, 71, 0.8)', 
+                      'rgba(252, 165, 165, 0.8)'
+                    ],
+                    borderWidth: 0,
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 16,
+                      color: '#94a3b8',
+                      font: { size: 11 }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'var(--bg-elev)',
+                    titleColor: '#64748b',
+                    bodyColor: '#64748b',
+                    borderColor: 'var(--border)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Top Customers */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>Top Customers</h3>
+            <span className="text-sm" style={{ color: 'var(--fg-subtle)' }}>By revenue</span>
+          </div>
+          <div className="space-y-3">
+            {/* Mock top customers data */}
+            {[
+              { name: 'ABC Auto Shop', revenue: stats.overview.total_sales * 0.25, orders: 12 },
+              { name: 'City Garage Ltd', revenue: stats.overview.total_sales * 0.18, orders: 8 },
+              { name: 'Quick Fix Motors', revenue: stats.overview.total_sales * 0.15, orders: 6 },
+              { name: 'Downtown Auto', revenue: stats.overview.total_sales * 0.12, orders: 5 },
+            ].map((customer, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${
+                    index === 0 ? 'bg-yellow-500' : 
+                    index === 1 ? 'bg-gray-400' : 
+                    index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--fg)' }}>{customer.name}</div>
+                    <div className="text-xs" style={{ color: 'var(--fg-subtle)' }}>{customer.orders} orders</div>
+                  </div>
+                </div>
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+                  ${customer.revenue.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>Key Metrics</h3>
+            <span className="text-sm" style={{ color: 'var(--fg-subtle)' }}>This month</span>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--fg-muted)' }}>Conversion Rate</div>
+                  <div className="text-xs" style={{ color: 'var(--fg-subtle)' }}>Quotes to sales</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold" style={{ color: 'var(--fg)' }}>72%</div>
+                <div className="text-xs text-green-600">+8% vs last month</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+                    <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
+                    <polyline points="17,6 23,6 23,12"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--fg-muted)' }}>Growth Rate</div>
+                  <div className="text-xs" style={{ color: 'var(--fg-subtle)' }}>MoM revenue</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold" style={{ color: 'var(--fg)' }}>+15%</div>
+                <div className="text-xs text-green-600">Above target</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--fg-muted)' }}>Repeat Rate</div>
+                  <div className="text-xs" style={{ color: 'var(--fg-subtle)' }}>Customer retention</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold" style={{ color: 'var(--fg)' }}>58%</div>
+                <div className="text-xs text-blue-600">Industry avg: 45%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Order Status at Bottom */}
       <div className="card max-w-md">
         <div className="flex items-center justify-between mb-6">

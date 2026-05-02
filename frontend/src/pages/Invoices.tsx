@@ -68,6 +68,20 @@ export default function Invoices() {
     }
   };
 
+  const handleDeleteInvoice = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await invoicesAPI.delete(id);
+      setToast({ message: 'Invoice deleted successfully', type: 'success' });
+      loadInvoices();
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to delete invoice', type: 'error' });
+    }
+  };
+
   const clearFilters = () => {
     setFilters({ start_date: '', end_date: '', status: '' });
   };
@@ -225,6 +239,12 @@ export default function Invoices() {
                           Mark Paid
                         </button>
                       )}
+                      <button
+                        onClick={() => handleDeleteInvoice(invoice.id)}
+                        className="text-red-600 hover:text-red-700 font-medium text-sm"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>

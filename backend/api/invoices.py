@@ -97,7 +97,7 @@ def get_invoice(invoice_id):
         return jsonify({
             'id': invoice.id,
             'invoice_number': invoice.invoice_number,
-            'invoice_date': invoice.invoice_date.isoformat(),
+            'invoice_date': invoice.date.isoformat(),
             'customer': {
                 'id': invoice.customer.id,
                 'name': invoice.customer.name,
@@ -107,18 +107,21 @@ def get_invoice(invoice_id):
             },
             'line_items': [{
                 'id': item.id,
-                'product_name': item.product_name,
-                'part_number': item.part_number,
+                'product_name': item.description,
+                'part_number': '',  # Not in current model
                 'quantity': item.quantity,
                 'unit_price': item.unit_price,
-                'line_total': item.line_total
-            } for item in invoice.line_items],
+                'line_total': item.total
+            } for item in invoice.items],
             'subtotal': invoice.subtotal,
-            'tax_rate': invoice.tax_rate,
+            'tax_rate': invoice.tax_percent,
             'tax_amount': invoice.tax_amount,
             'total': invoice.total,
             'status': invoice.status,
-            'notes': invoice.notes
+            'notes': invoice.notes,
+            'reference': invoice.reference,
+            'salesperson': invoice.salesperson,
+            'payment_terms': invoice.payment_terms
         }), 200
     finally:
         db.close()
@@ -127,6 +130,14 @@ def get_invoice(invoice_id):
 @invoices_bp.route('', methods=['POST'])
 @login_required
 def create_invoice():
+    # Security: Check record limit (500 invoices max per user)
+    db = get_db()
+    try:
+        current_count = db.query(Invoice).filter_by(user_id=current_user.id).count()
+        if current_count >= 500:
+            return jsonify({'error': 'Invoice limit reached (500 max). Please contact support.'}), 429
+    finally:
+        db.close()
     """Create new invoice"""
     data = request.get_json()
     
@@ -156,7 +167,7 @@ def create_invoice():
         
         # Calculate totals
         subtotal = sum(item['quantity'] * item['unit_price'] for item in line_items)
-        tax_rate = 8.25  # Fixed tax rate
+        tax_rate = 13.0  # Ontario HST
         tax_amount = round(subtotal * tax_rate / 100, 2)
         total = round(subtotal + tax_amount, 2)
         
@@ -171,13 +182,16 @@ def create_invoice():
             user_id=current_user.id,
             customer_id=data['customer_id'],
             invoice_number=invoice_number,
-            invoice_date=invoice_date,
+            date=invoice_date,
             subtotal=subtotal,
-            tax_rate=tax_rate,
+            tax_percent=13.0,
             tax_amount=tax_amount,
             total=total,
-            status=data.get('status', 'unpaid'),
-            notes=data.get('notes', '').strip()
+            status=data.get('status', 'pending'),
+            notes=data.get('notes', '').strip(),
+            reference=data.get('reference', '').strip(),
+            salesperson=data.get('salesperson', '').strip(),
+            payment_terms=data.get('payment_terms', 'COD CASH ONLY')
         )
         db.add(invoice)
         db.flush()  # Get invoice ID
@@ -187,11 +201,10 @@ def create_invoice():
             line_total = round(item['quantity'] * item['unit_price'], 2)
             line_item = InvoiceLineItem(
                 invoice_id=invoice.id,
-                product_name=item['product_name'].strip(),
-                part_number=item.get('part_number', '').strip(),
+                description=item['product_name'].strip(),
                 quantity=item['quantity'],
                 unit_price=item['unit_price'],
-                line_total=line_total
+                total=line_total
             )
             db.add(line_item)
         
@@ -238,6 +251,25 @@ def update_invoice(invoice_id):
         db.commit()
         
         return jsonify({'message': 'Invoice updated successfully'}), 200
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+@invoices_bp.route('/<int:invoice_id>', methods=['DELETE'])
+@login_required
+def delete_invoice(invoice_id):
+    """Delete invoice and all line items"""
+    db = get_db()
+    try:
+        invoice = db.query(Invoice).filter_by(id=invoice_id, user_id=current_user.id).first()
+        if not invoice:
+            return jsonify({'error': 'Invoice not found'}), 404
+        
+        db.delete(invoice)  # Cascade will delete line items
+        db.commit()
+        return jsonify({'message': 'Invoice deleted successfully'}), 200
     except Exception as e:
         db.rollback()
         return jsonify({'error': str(e)}), 500
