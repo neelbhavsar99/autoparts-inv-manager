@@ -51,7 +51,7 @@ class User(Base, UserMixin):
     email = Column(String(120), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     name = Column(String(100), nullable=False)
-    role = Column(String(20), nullable=False, default='user')  # 'admin' or 'user'
+    role = Column(String(20), nullable=True, default='user')  # 'admin' or 'user'
     created_at = Column(DateTime, default=datetime.utcnow)
     
     def set_password(self, password):
@@ -64,7 +64,7 @@ class User(Base, UserMixin):
     
     def is_admin(self):
         """Check if user is admin"""
-        return self.role == 'admin'
+        return getattr(self, 'role', 'user') == 'admin'
 
 class BusinessInfo(Base):
     """Business settings model"""
