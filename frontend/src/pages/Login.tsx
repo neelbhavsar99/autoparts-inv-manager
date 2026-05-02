@@ -34,6 +34,7 @@ export default function Login({ onLogin }: LoginProps) {
 
     try {
       const response = await authAPI.login(email, password);
+      localStorage.setItem('token', response.token);
       onLogin(response.user);
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -107,7 +108,7 @@ export default function Login({ onLogin }: LoginProps) {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-8">
-          Optimized for old MacBook Pro • Fast & Lightweight
+          Owned and operated in Canada. 
         </p>
       </div>
     </div>

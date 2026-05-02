@@ -61,14 +61,14 @@ def list_invoices():
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 20))
         
-        invoices = query.order_by(Invoice.invoice_date.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        invoices = query.order_by(Invoice.date.desc()).offset((page - 1) * per_page).limit(per_page).all()
         total = query.count()
         
         return jsonify({
             'data': [{
                 'id': inv.id,
                 'invoice_number': inv.invoice_number,
-                'invoice_date': inv.invoice_date.isoformat(),
+                'invoice_date': inv.date.isoformat(),
                 'customer_name': inv.customer.name,
                 'customer_id': inv.customer_id,
                 'total': inv.total,

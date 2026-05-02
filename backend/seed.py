@@ -1,193 +1,158 @@
 """
-Database seeding script
-Creates test user, business info, customers, and sample invoices
+Seed database with initial data
 """
-from datetime import datetime, timedelta
+import sys
 from models import init_db, get_db, User, BusinessInfo, Customer, Invoice, InvoiceLineItem
+from datetime import datetime, timedelta
+import random
 
 def seed_database():
-    """Seed database with test data"""
-    print("🌱 Seeding database...")
-    
-    # Initialize database
+    """Seed database with initial data"""
+    print("Initializing database...")
     init_db()
     
     db = get_db()
+    
     try:
-        # Check if user already exists
-        existing_user = db.query(User).filter_by(email='admin@autoparts.com').first()
-        if existing_user:
-            print("⚠️  Database already seeded. Delete database.db to reseed.")
+        # Check if data already exists
+        if db.query(User).count() > 0:
+            print("Database already contains data. Skipping seed.")
             return
         
+        print("Creating admin user...")
         # Create test user
         user = User(
             email='admin@autoparts.com',
-            name='Admin User'
+            name='Admin User',
+            role='admin'  # Set admin role
         )
         user.set_password('admin123')  # Min 8 chars
         db.add(user)
-        db.flush()
-        print(f"✅ Created user: {user.email}")
+        db.commit()  # Commit to get user ID
         
-        # Create business info
+        print("Creating business settings...")
+        # Create business settings
         business = BusinessInfo(
             user_id=user.id,
-            company_name='AutoParts Pro Shop',
-            address='123 Main Street\nSpringfield, IL 62701',
-            phone='(555) 123-4567',
-            email='contact@autopartspro.com',
-            tax_id='12-3456789',
-            logo_url=''
+            company_name='Sahjanand Auto Parts',
+            address='123 Auto Parts Street\nGujarat, India',
+            phone='+91 98765 43210',
+            email='info@sahjanandautoparts.com',
+            tax_id='24AAAAA0000A1Z5',
         )
         db.add(business)
-        print(f"✅ Created business: {business.company_name}")
         
-        # Create customers
-        customers_data = [
-            {
-                'name': 'John\'s Auto Repair',
-                'address': '456 Oak Avenue\nSpringfield, IL 62702',
-                'phone': '(555) 234-5678',
-                'email': 'john@johnsauto.com'
-            },
-            {
-                'name': 'Smith Motors',
-                'address': '789 Elm Street\nSpringfield, IL 62703',
-                'phone': '(555) 345-6789',
-                'email': 'info@smithmotors.com'
-            },
-            {
-                'name': 'Quick Fix Garage',
-                'address': '321 Pine Road\nSpringfield, IL 62704',
-                'phone': '(555) 456-7890',
-                'email': 'service@quickfix.com'
-            }
-        ]
-        
+        print("Creating sample customers...")
+        # Create sample customers
         customers = []
-        for data in customers_data:
-            customer = Customer(user_id=user.id, **data)
-            db.add(customer)
+        customer_data = [
+            ('Raj Motors', 'Raj Patel', 'raj@rajmotors.com', '+91 98765 12345', '456 Motor Street, Ahmedabad'),
+            ('Shah Auto Service', 'Mehul Shah', 'mehul@shahauto.com', '+91 98765 23456', '789 Service Road, Surat'),
+            ('Gujarat Garage', 'Amit Desai', 'amit@gujaratgarage.com', '+91 98765 34567', '321 Garage Lane, Vadodara'),
+            ('Quick Fix Auto', 'Priya Sharma', 'priya@quickfix.com', '+91 98765 45678', '654 Repair Avenue, Rajkot'),
+            ('City Car Care', 'Kiran Mehta', 'kiran@citycarcare.com', '+91 98765 56789', '987 Care Plaza, Gandhinagar')
+        ]
+        
+        for company, name, email, phone, address in customer_data:
+            customer = Customer(
+                user_id=user.id,
+                name=name,
+                company_name=company,
+                email=email,
+                phone=phone,
+                address=address,
+                gst_number=f'24AAAA{random.randint(1000, 9999)}A1Z5'
+            )
             customers.append(customer)
-        db.flush()
-        print(f"✅ Created {len(customers)} customers")
+            db.add(customer)
         
-        # Create sample invoices
-        today = datetime.utcnow()
-        
-        # Invoice 1 (last month)
-        invoice1_date = today - timedelta(days=30)
-        invoice1 = Invoice(
-            user_id=user.id,
-            customer_id=customers[0].id,
-            invoice_number=f"{invoice1_date.strftime('%Y%m%d')}-001",
-            invoice_date=invoice1_date,
-            subtotal=450.00,
-            tax_rate=8.25,
-            tax_amount=37.13,
-            total=487.13,
-            status='paid',
-            notes='Thank you for your business!'
-        )
-        db.add(invoice1)
-        db.flush()
-        
-        # Line items for invoice 1
-        items1 = [
-            {'product_name': 'Brake Pads', 'part_number': 'BP-1234', 'quantity': 2, 'unit_price': 75.00, 'line_total': 150.00},
-            {'product_name': 'Oil Filter', 'part_number': 'OF-5678', 'quantity': 5, 'unit_price': 12.00, 'line_total': 60.00},
-            {'product_name': 'Air Filter', 'part_number': 'AF-9012', 'quantity': 3, 'unit_price': 25.00, 'line_total': 75.00},
-            {'product_name': 'Spark Plugs', 'part_number': 'SP-3456', 'quantity': 8, 'unit_price': 8.00, 'line_total': 64.00},
-            {'product_name': 'Wiper Blades', 'part_number': 'WB-7890', 'quantity': 4, 'unit_price': 25.25, 'line_total': 101.00}
-        ]
-        for item_data in items1:
-            item = InvoiceLineItem(invoice_id=invoice1.id, **item_data)
-            db.add(item)
-        
-        print(f"✅ Created invoice: {invoice1.invoice_number}")
-        
-        # Invoice 2 (2 weeks ago)
-        invoice2_date = today - timedelta(days=14)
-        invoice2 = Invoice(
-            user_id=user.id,
-            customer_id=customers[1].id,
-            invoice_number=f"{invoice2_date.strftime('%Y%m%d')}-001",
-            invoice_date=invoice2_date,
-            subtotal=825.00,
-            tax_rate=8.25,
-            tax_amount=68.06,
-            total=893.06,
-            status='unpaid',
-            notes='Net 30 payment terms'
-        )
-        db.add(invoice2)
-        db.flush()
-        
-        # Line items for invoice 2
-        items2 = [
-            {'product_name': 'Alternator', 'part_number': 'ALT-2468', 'quantity': 1, 'unit_price': 350.00, 'line_total': 350.00},
-            {'product_name': 'Battery', 'part_number': 'BAT-1357', 'quantity': 2, 'unit_price': 125.00, 'line_total': 250.00},
-            {'product_name': 'Serpentine Belt', 'part_number': 'SB-9753', 'quantity': 3, 'unit_price': 45.00, 'line_total': 135.00},
-            {'product_name': 'Coolant', 'part_number': 'CL-8642', 'quantity': 6, 'unit_price': 15.00, 'line_total': 90.00}
-        ]
-        for item_data in items2:
-            item = InvoiceLineItem(invoice_id=invoice2.id, **item_data)
-            db.add(item)
-        
-        print(f"✅ Created invoice: {invoice2.invoice_number}")
-        
-        # Invoice 3 (this week)
-        invoice3_date = today - timedelta(days=3)
-        invoice3 = Invoice(
-            user_id=user.id,
-            customer_id=customers[2].id,
-            invoice_number=f"{invoice3_date.strftime('%Y%m%d')}-001",
-            invoice_date=invoice3_date,
-            subtotal=1250.00,
-            tax_rate=8.25,
-            tax_amount=103.13,
-            total=1353.13,
-            status='unpaid',
-            notes=''
-        )
-        db.add(invoice3)
-        db.flush()
-        
-        # Line items for invoice 3
-        items3 = [
-            {'product_name': 'Brake Rotors', 'part_number': 'BR-4321', 'quantity': 4, 'unit_price': 85.00, 'line_total': 340.00},
-            {'product_name': 'Brake Pads', 'part_number': 'BP-1234', 'quantity': 4, 'unit_price': 75.00, 'line_total': 300.00},
-            {'product_name': 'Transmission Fluid', 'part_number': 'TF-6789', 'quantity': 10, 'unit_price': 18.00, 'line_total': 180.00},
-            {'product_name': 'Fuel Filter', 'part_number': 'FF-2345', 'quantity': 5, 'unit_price': 22.00, 'line_total': 110.00},
-            {'product_name': 'Cabin Air Filter', 'part_number': 'CAF-6789', 'quantity': 8, 'unit_price': 20.00, 'line_total': 160.00},
-            {'product_name': 'Engine Oil 5W-30', 'part_number': 'EO-1111', 'quantity': 20, 'unit_price': 8.00, 'line_total': 160.00}
-        ]
-        for item_data in items3:
-            item = InvoiceLineItem(invoice_id=invoice3.id, **item_data)
-            db.add(item)
-        
-        print(f"✅ Created invoice: {invoice3.invoice_number}")
-        
-        # Commit all changes
+        # Commit to get customer IDs
         db.commit()
         
-        print("\n" + "="*50)
-        print("✅ Database seeded successfully!")
-        print("="*50)
-        print("\n📧 Test Login Credentials:")
-        print(f"   Email: {user.email}")
-        print(f"   Password: admin123")
-        print("\n💼 Business: {business.company_name}")
-        print(f"👥 Customers: {len(customers)}")
-        print(f"📄 Invoices: 3")
-        print("\n🚀 Run 'python app.py' to start the server")
-        print("="*50)
+        print("Creating sample invoices...")
+        # Create sample invoices
+        invoice_items_data = [
+            ('Brake Pads - Front (Maruti Swift)', 850.00),
+            ('Engine Oil - 5W-30 (4L)', 1200.00),
+            ('Air Filter - Honda City', 350.00),
+            ('Spark Plugs (Set of 4)', 600.00),
+            ('Battery - 12V 45AH', 3500.00),
+            ('Headlight Bulb - H4', 250.00),
+            ('Wiper Blades (Pair)', 450.00),
+            ('Clutch Plate - Hyundai i20', 2800.00),
+            ('Alternator Belt', 380.00),
+            ('Coolant (1L)', 220.00)
+        ]
+        
+        # Create invoices for each customer
+        for i, customer in enumerate(customers):
+            # Create 2-3 invoices per customer
+            num_invoices = random.randint(2, 3)
+            for j in range(num_invoices):
+                # Create invoice with random date in last 60 days
+                days_ago = random.randint(1, 60)
+                invoice_date = datetime.now() - timedelta(days=days_ago)
+                due_date = invoice_date + timedelta(days=30)
+                
+                invoice = Invoice(
+                    invoice_number=f'SAP{1000 + i * 10 + j}',
+                    customer_id=customer.id,
+                    user_id=user.id,
+                    date=invoice_date,
+                    due_date=due_date,
+                    discount_percent=random.choice([0, 5, 10]),
+                    tax_percent=18.0  # GST
+                )
+                
+                # Add random items to invoice
+                num_items = random.randint(1, 4)
+                selected_items = random.sample(invoice_items_data, num_items)
+                
+                subtotal = 0
+                for item_desc, unit_price in selected_items:
+                    quantity = random.randint(1, 3)
+                    item_total = quantity * unit_price
+                    
+                    invoice_item = InvoiceLineItem(
+                        invoice=invoice,
+                        description=item_desc,
+                        quantity=quantity,
+                        unit_price=unit_price,
+                        total=item_total
+                    )
+                    db.add(invoice_item)
+                    subtotal += item_total
+                
+                # Calculate invoice totals
+                invoice.subtotal = subtotal
+                invoice.discount_amount = subtotal * invoice.discount_percent / 100
+                invoice.tax_amount = (subtotal - invoice.discount_amount) * invoice.tax_percent / 100
+                invoice.total = subtotal - invoice.discount_amount + invoice.tax_amount
+                
+                # Randomly mark some as paid
+                if random.random() < 0.6:  # 60% paid
+                    invoice.paid_amount = invoice.total
+                    invoice.status = 'paid'
+                elif random.random() < 0.5:  # 20% partial
+                    invoice.paid_amount = invoice.total * random.uniform(0.3, 0.7)
+                    invoice.status = 'partial'
+                else:  # 20% pending
+                    invoice.paid_amount = 0
+                    invoice.status = 'pending'
+                
+                db.add(invoice)
+        
+        # Final commit
+        db.commit()
+        print("Database seeded successfully!")
+        print("\nLogin credentials:")
+        print("Email: admin@autoparts.com")
+        print("Password: admin123")
         
     except Exception as e:
+        print(f"Error seeding database: {e}")
         db.rollback()
-        print(f"❌ Error seeding database: {e}")
-        raise
+        sys.exit(1)
     finally:
         db.close()
 

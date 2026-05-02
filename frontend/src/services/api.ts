@@ -16,6 +16,7 @@ async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promis
     credentials: 'include', // Include cookies for session
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
       ...options.headers,
     },
   };
@@ -37,7 +38,7 @@ async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promis
 // Auth API
 export const authAPI = {
   login: (email: string, password: string) =>
-    fetchAPI<{ message: string; user: any }>('/auth/login', {
+    fetchAPI<{ token: string; user: any }>('/auth/login', {
       method: 'POST',
       body: { email, password },
     }),
@@ -52,6 +53,15 @@ export const authAPI = {
 
   getCurrentUser: () =>
     fetchAPI<any>('/auth/user'),
+
+  getUsers: () =>
+    fetchAPI<any[]>('/auth/users'),
+
+  createUser: (userData: { email: string; name: string; password: string; role?: string }) =>
+    fetchAPI<{ message: string; user: any }>('/auth/users', {
+      method: 'POST',
+      body: userData,
+    }),
 };
 
 // Business API
@@ -130,4 +140,12 @@ export const invoicesAPI = {
 // Dashboard API
 export const dashboardAPI = {
   getStats: () => fetchAPI<any>('/dashboard/stats'),
+};
+
+// Combined API export for convenience
+export const api = {
+  get: (url: string) => fetchAPI<any>(url),
+  post: (url: string, body?: any) => fetchAPI<any>(url, { method: 'POST', body }),
+  put: (url: string, body?: any) => fetchAPI<any>(url, { method: 'PUT', body }),
+  delete: (url: string) => fetchAPI<any>(url, { method: 'DELETE' }),
 };

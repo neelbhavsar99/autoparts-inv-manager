@@ -1,9 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { authAPI } from './services/api';
-import { User } from './types';
-
-// Pages
+import { api } from './services/api';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import BusinessSettings from './pages/BusinessSettings';
@@ -11,13 +9,11 @@ import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import CreateInvoice from './pages/CreateInvoice';
 import ViewInvoice from './pages/ViewInvoice';
-
-// Components
-import Layout from './components/Layout';
+import Users from './pages/Users';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,26 +22,33 @@ function App() {
 
   const checkAuth = async () => {
     try {
-      const response = await authAPI.checkAuth();
-      if (response.authenticated && response.user) {
-        setUser(response.user);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
       }
+      const response = await api.get('/auth/me');
+      setUser(response.user);
     } catch (error) {
-      console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+      console.error('Not authenticated');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (userData: User) => {
+  const handleLogin = (userData: any) => {
     setUser(userData);
   };
 
   const handleLogout = async () => {
     try {
-      await authAPI.logout();
+      await api.post('/auth/logout');
+      localStorage.removeItem('token');
       setUser(null);
     } catch (error) {
+      localStorage.removeItem('token');
+      setUser(null);
       console.error('Logout failed:', error);
     }
   };
@@ -57,35 +60,27 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
-        <Route
-          path="/login"
+        <Route 
+          path="/login" 
           element={
-            user ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />
-          }
+            user ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />
+          } 
         />
-
-        {/* Protected routes */}
         <Route
           path="/"
           element={
-            user ? (
-              <Layout user={user} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            user ? <Layout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="/dashboard" />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="business" element={<BusinessSettings />} />
           <Route path="customers" element={<Customers />} />
           <Route path="invoices" element={<Invoices />} />
           <Route path="invoices/new" element={<CreateInvoice />} />
           <Route path="invoices/:id" element={<ViewInvoice />} />
+          <Route path="users" element={<Users />} />
         </Route>
-
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

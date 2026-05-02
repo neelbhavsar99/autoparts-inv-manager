@@ -2,7 +2,7 @@
 Dashboard analytics API endpoints
 """
 from flask import Blueprint, jsonify
-from flask_login import login_required, current_user
+from auth import token_required
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from models import get_db, Invoice, InvoiceLineItem
@@ -10,8 +10,8 @@ from models import get_db, Invoice, InvoiceLineItem
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/stats', methods=['GET'])
-@login_required
-def get_dashboard_stats():
+@token_required
+def get_dashboard_stats(user):
     """Get sales statistics for dashboard"""
     db = get_db()
     try:
@@ -22,9 +22,9 @@ def get_dashboard_stats():
         
         # Total sales last month
         last_month_invoices = db.query(Invoice).filter(
-            Invoice.user_id == current_user.id,
-            Invoice.invoice_date >= first_day_last_month,
-            Invoice.invoice_date < first_day_this_month
+            Invoice.user_id == user.id,
+            Invoice.date >= first_day_last_month,
+            Invoice.date < first_day_this_month
         ).all()
         
         total_sales = sum(inv.total for inv in last_month_invoices)
@@ -34,12 +34,12 @@ def get_dashboard_stats():
         # Monthly sales for last 12 months (bar chart data)
         twelve_months_ago = now - timedelta(days=365)
         monthly_sales = db.query(
-            extract('year', Invoice.invoice_date).label('year'),
-            extract('month', Invoice.invoice_date).label('month'),
+            extract('year', Invoice.date).label('year'),
+            extract('month', Invoice.date).label('month'),
             func.sum(Invoice.total).label('total')
         ).filter(
-            Invoice.user_id == current_user.id,
-            Invoice.invoice_date >= twelve_months_ago
+            Invoice.user_id == user.id,
+            Invoice.date >= twelve_months_ago
         ).group_by('year', 'month').order_by('year', 'month').all()
         
         monthly_chart_data = [{
@@ -49,15 +49,15 @@ def get_dashboard_stats():
         
         # Top products by revenue (pie chart data)
         top_products = db.query(
-            InvoiceLineItem.product_name,
-            func.sum(InvoiceLineItem.line_total).label('revenue')
+            InvoiceLineItem.description,
+            func.sum(InvoiceLineItem.total).label('revenue')
         ).join(Invoice).filter(
-            Invoice.user_id == current_user.id,
-            Invoice.invoice_date >= twelve_months_ago
-        ).group_by(InvoiceLineItem.product_name).order_by(func.sum(InvoiceLineItem.line_total).desc()).limit(10).all()
+            Invoice.user_id == user.id,
+            Invoice.date >= twelve_months_ago
+        ).group_by(InvoiceLineItem.description).order_by(func.sum(InvoiceLineItem.total).desc()).limit(10).all()
         
         product_chart_data = [{
-            'product': row.product_name,
+            'product': row.description,
             'revenue': float(row.revenue)
         } for row in top_products]
         
