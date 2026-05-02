@@ -118,6 +118,11 @@ export const invoicesAPI = {
       body: data,
     }),
 
+  delete: (id: number) =>
+    fetchAPI<any>(`/invoices/${id}`, {
+      method: 'DELETE',
+    }),
+
   downloadPDF: (id: number) => {
     // Special handling for PDF download
     return fetch(`${API_BASE}/invoices/${id}/pdf`, {

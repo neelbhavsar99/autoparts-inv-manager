@@ -31,6 +31,15 @@ def list_customers():
 @login_required
 def create_customer():
     """Create new customer"""
+    # Security: Check record limit (500 customers max per user)
+    db = get_db()
+    try:
+        current_count = db.query(Customer).filter_by(user_id=current_user.id).count()
+        if current_count >= 500:
+            return jsonify({'error': 'Customer limit reached (500 max). Please contact support.'}), 429
+    finally:
+        db.close()
+        
     data = request.get_json()
     
     # Validation

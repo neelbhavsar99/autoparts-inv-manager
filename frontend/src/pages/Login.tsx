@@ -48,11 +48,27 @@ export default function Login({ onLogin }: LoginProps) {
       <div className="max-w-md w-full">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🚗</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            AutoParts Invoice Manager
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div 
+                className="text-4xl font-bold bg-gradient-to-br from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                style={{ fontFamily: 'Geist, ui-sans-serif, system-ui' }}
+              >
+                Synk
+              </div>
+              <div 
+                className="text-sm font-semibold text-gray-500 mt-1 tracking-wider"
+                style={{ fontFamily: 'Geist, ui-sans-serif, system-ui' }}
+              >
+                AUTO PARTS
+              </div>
+              <div className="absolute -top-1 -right-2 w-2 h-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full"></div>
+            </div>
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            Welcome back
           </h1>
-          <p className="text-gray-600">Sign in to manage your invoices</p>
+          <p className="text-gray-600">Sign in to your account</p>
         </div>
 
         {/* Login Form */}
