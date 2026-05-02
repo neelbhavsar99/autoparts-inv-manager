@@ -18,6 +18,15 @@ export default function CreateInvoice() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    company_name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   useEffect(() => {
     loadCustomers();
@@ -29,6 +38,27 @@ export default function CreateInvoice() {
       setCustomers(data);
     } catch (err: any) {
       setToast({ message: err.message || 'Failed to load customers', type: 'error' });
+    }
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!newCustomer.name.trim()) {
+      setToast({ message: 'Customer name is required', type: 'error' });
+      return;
+    }
+
+    setCreatingCustomer(true);
+    try {
+      const customer = await customersAPI.create(newCustomer);
+      await loadCustomers(); // Refresh list
+      setSelectedCustomerId(customer.id); // Auto-select new customer
+      setShowAddCustomer(false);
+      setNewCustomer({ name: '', company_name: '', email: '', phone: '', address: '' });
+      setToast({ message: 'Customer created successfully', type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to create customer', type: 'error' });
+    } finally {
+      setCreatingCustomer(false);
     }
   };
 
@@ -58,7 +88,7 @@ export default function CreateInvoice() {
   };
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.0825; // 8.25% fixed
+    return calculateSubtotal() * 0.13; // 13% Ontario HST
   };
 
   const calculateTotal = () => {
@@ -128,33 +158,94 @@ export default function CreateInvoice() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoice Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Customer <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedCustomerId || ''}
-                onChange={(e) => setSelectedCustomerId(Number(e.target.value))}
-                className="input-field"
-                required
-              >
-                <option value="">Select a customer</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
-              {customers.length === 0 && (
-                <p className="text-sm text-gray-500 mt-1">
-                  No customers found.{' '}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/customers')}
-                    className="text-primary-600 hover:text-primary-700 font-medium"
-                  >
-                    Add a customer first
-                  </button>
-                </p>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Customer <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomer(!showAddCustomer)}
+                  className="text-primary-600 hover:text-primary-700 font-medium text-sm"
+                >
+                  + Add Customer
+                </button>
+              </div>
+              
+              {!showAddCustomer ? (
+                <select
+                  value={selectedCustomerId || ''}
+                  onChange={(e) => setSelectedCustomerId(Number(e.target.value))}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select a customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Customer name *"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+                      className="input-field"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Company name"
+                      value={newCustomer.company_name}
+                      onChange={(e) => setNewCustomer({...newCustomer, company_name: e.target.value})}
+                      className="input-field"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                      className="input-field"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone"
+                      value={newCustomer.phone}
+                      onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
+                      className="input-field"
+                    />
+                  </div>
+                  <textarea
+                    placeholder="Address"
+                    value={newCustomer.address}
+                    onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
+                    className="input-field"
+                    rows={2}
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddCustomer(false);
+                        setNewCustomer({ name: '', company_name: '', email: '', phone: '', address: '' });
+                      }}
+                      className="btn-secondary text-sm"
+                      disabled={creatingCustomer}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateCustomer}
+                      className="btn-primary text-sm"
+                      disabled={creatingCustomer || !newCustomer.name.trim()}
+                    >
+                      {creatingCustomer ? 'Creating...' : 'Create Customer'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -283,7 +374,7 @@ export default function CreateInvoice() {
                   <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax (8.25%):</span>
+                  <span className="text-gray-600">HST (13%):</span>
                   <span className="font-medium">${calculateTax().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">

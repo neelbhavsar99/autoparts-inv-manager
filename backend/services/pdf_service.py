@@ -6,9 +6,10 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+import os
 
 def generate_invoice_pdf(invoice, business):
     """
@@ -48,6 +49,14 @@ def generate_invoice_pdf(invoice, business):
     normal_style = styles['Normal']
     normal_style.fontSize = 10
     
+    # Logo (if exists)
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'sample-images', 'with-logo.png')
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=2*inch, height=1*inch)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+        elements.append(Spacer(1, 0.2*inch))
+    
     # Title
     elements.append(Paragraph("INVOICE", title_style))
     elements.append(Spacer(1, 0.2*inch))
@@ -56,7 +65,7 @@ def generate_invoice_pdf(invoice, business):
     info_data = [
         [
             Paragraph(f"<b>{business.company_name}</b><br/>{business.address.replace(chr(10), '<br/>')}<br/>Phone: {business.phone}<br/>Email: {business.email}<br/>Tax ID: {business.tax_id}", normal_style),
-            Paragraph(f"<b>Invoice #:</b> {invoice.invoice_number}<br/><b>Date:</b> {invoice.invoice_date.strftime('%Y-%m-%d')}<br/><b>Status:</b> {invoice.status.upper()}", normal_style)
+            Paragraph(f"<b>Invoice #:</b> {invoice.invoice_number}<br/><b>Date:</b> {invoice.date.strftime('%Y-%m-%d')}<br/><b>Status:</b> {invoice.status.upper()}", normal_style)
         ]
     ]
     
@@ -82,24 +91,18 @@ def generate_invoice_pdf(invoice, business):
     elements.append(Paragraph("<b>Items:</b>", heading_style))
     
     # Table header
-    line_items_data = [['Product', 'Part #', 'Qty', 'Unit Price', 'Total']]
+    line_items_data = [['Description', 'Qty', 'Unit Price', 'Total']]
     
     # Table rows
-    for item in invoice.line_items:
+    for item in invoice.items:
         line_items_data.append([
-            item.product_name,
-            item.part_number or '-',
+            item.description,
             str(item.quantity),
             f"${item.unit_price:.2f}",
-            f"${item.line_total:.2f}"
+            f"${item.total:.2f}"
         ])
     
-    # Totals
-    line_items_data.append(['', '', '', 'Subtotal:', f"${invoice.subtotal:.2f}"])
-    line_items_data.append(['', '', '', f'Tax ({invoice.tax_rate}%):', f"${invoice.tax_amount:.2f}"])
-    line_items_data.append(['', '', '', 'Total:', f"${invoice.total:.2f}"])
-    
-    line_items_table = Table(line_items_data, colWidths=[2.5*inch, 1.5*inch, 0.8*inch, 1.2*inch, 1*inch])
+    line_items_table = Table(line_items_data, colWidths=[3.5*inch, 1*inch, 1.5*inch, 1.5*inch])
     line_items_table.setStyle(TableStyle([
         # Header
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
@@ -110,18 +113,40 @@ def generate_invoice_pdf(invoice, business):
         ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
         
         # Body
-        ('ALIGN', (2, 1), (2, -4), 'CENTER'),  # Quantity center
-        ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),  # Prices right
-        ('FONTNAME', (0, 1), (-1, -4), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -4), 9),
-        ('GRID', (0, 0), (-1, -4), 0.5, colors.grey),
-        
-        # Totals section
-        ('FONTNAME', (3, -3), (-1, -1), 'Helvetica-Bold'),
-        ('LINEABOVE', (3, -3), (-1, -3), 1, colors.black),
-        ('LINEABOVE', (3, -1), (-1, -1), 2, colors.black),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),  # Quantity center
+        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),  # Prices right
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
     ]))
     elements.append(line_items_table)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Ontario Tax Summary Layout
+    # Left bottom: Taxable breakdown
+    # Right bottom: Totals
+    
+    taxable_amount = invoice.subtotal  # All items taxable for now
+    non_taxable_amount = 0.00
+    hst_rate = 13.0  # Ontario HST
+    
+    tax_summary_data = [
+        [
+            # Left column - Tax breakdown
+            Paragraph(f"<b>TAXABLE:</b> ${taxable_amount:.2f}<br/><b>NON-TAXABLE:</b> ${non_taxable_amount:.2f}", normal_style),
+            # Right column - Totals
+            Paragraph(f"<b>SUB TOTAL:</b> ${invoice.subtotal:.2f}<br/><b>SUBTOTAL:</b> ${invoice.subtotal:.2f}<br/><b>HST ({hst_rate}%):</b> ${invoice.tax_amount:.2f}<br/><b>TOTAL:</b> ${invoice.total:.2f}", normal_style)
+        ]
+    ]
+    
+    tax_summary_table = Table(tax_summary_data, colWidths=[3.5*inch, 3*inch])
+    tax_summary_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),   # Left column left align
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),  # Right column right align
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+    ]))
+    elements.append(tax_summary_table)
     
     # Notes
     if invoice.notes:

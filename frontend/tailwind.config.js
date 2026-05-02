@@ -7,6 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Kept for backwards-compat with anything still referencing primary-*
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -18,8 +19,12 @@ export default {
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
-        }
-      }
+        },
+      },
+      fontFamily: {
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'Helvetica Neue', 'sans-serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+      },
     },
   },
   plugins: [],

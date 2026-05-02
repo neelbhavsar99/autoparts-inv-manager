@@ -2,78 +2,212 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global styles */
+/* ============================================================
+   Synk Auto Parts — Design Tokens
+   Light-by-default. Dark variant via [data-theme="dark"].
+   ============================================================ */
+:root {
+  /* Light defaults */
+  --bg: #fafafa;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f4f4f5;
+  --border: #e8e8ec;
+  --border-strong: #d4d4d8;
+
+  --fg: #18181b;
+  --fg-muted: #52525b;
+  --fg-subtle: #a1a1aa;
+
+  /* Accent — confident blue */
+  --accent: oklch(0.65 0.18 250);
+  --accent-soft: oklch(0.65 0.18 250 / 0.10);
+  --accent-text: oklch(0.55 0.18 250);
+  --accent-border: oklch(0.65 0.18 250 / 0.4);
+
+  /* Semantic */
+  --success: oklch(0.62 0.16 160);
+  --success-soft: oklch(0.72 0.16 160 / 0.14);
+  --warn: oklch(0.68 0.15 80);
+  --warn-soft: oklch(0.78 0.15 80 / 0.14);
+  --danger: oklch(0.58 0.2 25);
+  --danger-soft: oklch(0.68 0.2 25 / 0.14);
+
+  /* Density */
+  --row-pad-y: 14px;
+  --row-pad-x: 18px;
+  --card-pad: 24px;
+  --gap: 20px;
+
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-sm: 6px;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --bg-elev: #111114;
+  --bg-elev-2: #16161a;
+  --surface: #1a1a1f;
+  --surface-hover: #1f1f25;
+  --border: #232329;
+  --border-strong: #2e2e36;
+
+  --fg: #f5f5f7;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #6b6b76;
+
+  --accent-soft: oklch(0.65 0.18 250 / 0.14);
+  --accent-text: oklch(0.78 0.14 250);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
 
-/* Custom utility classes */
+::selection { background: var(--accent-soft); color: var(--fg); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+code { font-family: var(--font-mono); }
+
+/* ============================================================
+   Existing component classes — REWRITTEN to use Synk tokens.
+   These class names are referenced throughout your pages, so
+   re-skinning here updates the whole app with no JSX edits.
+   ============================================================ */
 @layer components {
+  /* Buttons */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid oklch(0.55 0.18 250);
+    box-shadow: 0 1px 0 0 oklch(0.45 0.18 250) inset, 0 1px 2px rgba(0,0,0,0.12);
+    @apply inline-flex items-center gap-1.5 font-medium py-2 px-4 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
+  .btn-primary:hover { filter: brightness(1.08); }
 
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background: var(--bg-elev);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    @apply inline-flex items-center gap-1.5 font-medium py-2 px-4 rounded-lg transition-colors duration-150;
+  }
+  .btn-secondary:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background: var(--danger);
+    color: #fff;
+    @apply inline-flex items-center gap-1.5 font-medium py-2 px-4 rounded-lg transition-colors duration-150;
   }
+  .btn-danger:hover { filter: brightness(1.08); }
 
+  /* Inputs */
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    border-radius: 8px;
+    transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+    @apply w-full px-3 py-2 focus:outline-none;
+  }
+  .input-field::placeholder { color: var(--fg-subtle); }
+  .input-field:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
+  /* Cards */
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--card-pad);
+    box-shadow: none;
   }
 
+  /* Tables */
   .table-container {
-    @apply overflow-x-auto shadow-md rounded-lg;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    @apply overflow-x-auto;
   }
 
   .table-base {
-    @apply min-w-full divide-y divide-gray-200;
+    @apply min-w-full;
+    border-collapse: collapse;
+    font-size: 13px;
   }
 
   .table-header {
-    @apply bg-gray-50;
+    background: var(--bg-elev-2);
   }
 
   .table-header-cell {
-    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-subtle);
+    padding: 12px var(--row-pad-x);
+    border-bottom: 1px solid var(--border);
   }
 
-  .table-body {
-    @apply bg-white divide-y divide-gray-200;
+  .table-body tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
   }
+  .table-body tr:last-child { border-bottom: 0; }
+  .table-body tr:hover { background: var(--surface-hover); }
 
   .table-cell {
-    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+    padding: var(--row-pad-y) var(--row-pad-x);
+    color: var(--fg);
+    vertical-align: middle;
+    font-size: 13px;
+    white-space: nowrap;
   }
 }
 
-/* Loading spinner */
+/* ============================================================
+   Loading spinner — colored with token
+   ============================================================ */
 .spinner {
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3b82f6;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--accent);
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

@@ -101,7 +101,7 @@ def seed_database():
                     date=invoice_date,
                     due_date=due_date,
                     discount_percent=random.choice([0, 5, 10]),
-                    tax_percent=18.0  # GST
+                    tax_percent=13.0  # Ontario HST
                 )
                 
                 # Add random items to invoice
