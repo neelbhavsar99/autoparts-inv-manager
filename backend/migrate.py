@@ -95,6 +95,8 @@ def run_migration():
         # Add missing columns to existing tables
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';",
         "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS default_payment_terms VARCHAR(100) DEFAULT 'COD CASH ONLY';",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reference VARCHAR(100);",
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS salesperson VARCHAR(100);", 
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(100);",
