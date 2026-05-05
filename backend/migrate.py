@@ -85,23 +85,30 @@ def run_migration():
         """CREATE TABLE IF NOT EXISTS invoice_line_items (
             id SERIAL PRIMARY KEY,
             invoice_id INTEGER REFERENCES invoices(id) NOT NULL,
-            description TEXT NOT NULL,
+            description TEXT,
+            product_name TEXT,
             quantity FLOAT DEFAULT 1.0,
             unit_price FLOAT DEFAULT 0.0,
             total FLOAT DEFAULT 0.0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );""",
         
-        # Add missing columns to existing tables
+        # Add ALL missing columns to existing tables
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        
         "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS default_payment_terms VARCHAR(100) DEFAULT 'COD CASH ONLY';",
         "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
         "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
-        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reference VARCHAR(100);",
-        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS salesperson VARCHAR(100);", 
-        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(100);",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS company_name VARCHAR(200);",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS address TEXT;",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS phone VARCHAR(20);",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS tax_id VARCHAR(50);",
+        "ALTER TABLE business_info ADD COLUMN IF NOT EXISTS logo_url VARCHAR(500);",
         
-        # Add missing columns to customers table
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS user_id INTEGER;",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS name VARCHAR(200);",
         "ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_name VARCHAR(200);",
         "ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
         "ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone VARCHAR(20);",
@@ -111,21 +118,54 @@ def run_migration():
         "ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
         "ALTER TABLE customers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
         
-        # Critical fix: Add description column to invoice_line_items
-        "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(50);",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_id INTEGER;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS user_id INTEGER;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS due_date TIMESTAMP;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discount_percent FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discount_amount FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_percent FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_amount FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS total FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_amount FLOAT DEFAULT 0.0;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS notes TEXT;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reference VARCHAR(100);",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS salesperson VARCHAR(100);", 
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(100);",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        
+        "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS invoice_id INTEGER;",
+        "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS description TEXT;",
+        "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS product_name TEXT;",
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS quantity FLOAT DEFAULT 1.0;",
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS unit_price FLOAT DEFAULT 0.0;",
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS total FLOAT DEFAULT 0.0;",
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
         
-        # Create indexes for performance
-        "CREATE INDEX IF NOT EXISTS idx_customer_name ON customers(name);",
-        "CREATE INDEX IF NOT EXISTS idx_customer_phone ON customers(phone);",
-        "CREATE INDEX IF NOT EXISTS idx_invoice_number ON invoices(invoice_number);",
-        "CREATE INDEX IF NOT EXISTS idx_invoice_customer ON invoices(customer_id);",
-        "CREATE INDEX IF NOT EXISTS idx_invoice_date ON invoices(date);",
-        "CREATE INDEX IF NOT EXISTS idx_invoice_status ON invoices(status);",
-        "CREATE INDEX IF NOT EXISTS idx_item_invoice ON invoice_line_items(invoice_id);"
+        # Sync description and product_name columns
+        "UPDATE invoice_line_items SET description = product_name WHERE description IS NULL AND product_name IS NOT NULL;",
+        "UPDATE invoice_line_items SET product_name = description WHERE product_name IS NULL AND description IS NOT NULL;",
+        
+        # Remove problematic NOT NULL constraints temporarily
+        "ALTER TABLE invoice_line_items ALTER COLUMN product_name DROP NOT NULL;",
+        "ALTER TABLE invoice_line_items ALTER COLUMN description DROP NOT NULL;",
+        
+        # Create all indexes for performance
+        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);",
+        "CREATE INDEX IF NOT EXISTS idx_business_info_user ON business_info(user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_customers_user ON customers(user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);",
+        "CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);",
+        "CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_invoices_customer ON invoices(customer_id);",
+        "CREATE INDEX IF NOT EXISTS idx_invoices_number ON invoices(invoice_number);",
+        "CREATE INDEX IF NOT EXISTS idx_invoices_date ON invoices(date);",
+        "CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);",
+        "CREATE INDEX IF NOT EXISTS idx_line_items_invoice ON invoice_line_items(invoice_id);"
     ]
     
     try:
