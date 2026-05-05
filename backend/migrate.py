@@ -99,6 +99,16 @@ def run_migration():
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS salesperson VARCHAR(100);", 
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_terms VARCHAR(100);",
         
+        # Add missing columns to customers table
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_name VARCHAR(200);",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone VARCHAR(20);",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT;",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50);",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS balance FLOAT DEFAULT 0.0;",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "ALTER TABLE customers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        
         # Critical fix: Add description column to invoice_line_items
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';",
         "ALTER TABLE invoice_line_items ADD COLUMN IF NOT EXISTS quantity FLOAT DEFAULT 1.0;",

@@ -114,6 +114,12 @@ def initialize_database():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Health check endpoint for Railway
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'service': 'flask-backend'}), 200
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
